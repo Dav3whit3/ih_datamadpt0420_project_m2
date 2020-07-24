@@ -96,7 +96,7 @@ app.layout = html.Div(
                             src=app.get_asset_url("ironhack.jpeg"),
                             id="ironhack-image",
                             style={
-                                "height": "60px",
+                                "height": "150px",
                                 "width": "auto",
                                 "margin-bottom": "25px",
                             },
@@ -165,7 +165,7 @@ app.layout = html.Div(
                         ),
                         dcc.Dropdown(
                             id="well_statuses",
-                            options=well_status_options,
+                            #options=well_status_options,
                             multi=True,
                             value=list(WELL_STATUSES.keys()),
                             className="dcc_control",
@@ -190,9 +190,9 @@ app.layout = html.Div(
                         ),
                         dcc.Dropdown(
                             id="well_types",
-                            options=well_type_options,
+                            #options=well_type_options,
                             multi=True,
-                            value=list(WELL_TYPES.keys()),
+                            #value=list(WELL_TYPES.keys()),
                             className="dcc_control",
                         ),
                     ],
