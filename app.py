@@ -14,19 +14,12 @@ import dash_html_components as html
 import plotly.graph_objects as go
 import random
 
-# Multi-dropdown options
-from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
-
-# get relative data folder
-    # PATH = pathlib.Path(__file__).parent
-    # DATA_PATH = PATH.joinpath("data").resolve()
 
 def argument_parser():
     parser = argparse.ArgumentParser(description = 'Set chart type')
     parser.add_argument("-d", "--data", help="Introduce a file path to visualize its data", required=False)
     args = parser.parse_args()
     return args
-
 
 
 app = dash.Dash(
@@ -37,6 +30,8 @@ server = app.server
 
 # Load data
 df = pd.read_csv('/home/david/Documents/data/diamonds_train.csv')
+
+# Multi-dropdown options
 filter_options = df.select_dtypes(include=np.number).columns.to_list()
 
 
@@ -71,7 +66,7 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.Img(
-                            src=app.get_asset_url("ironhack.jpeg"),
+                            src=app.get_asset_url("ironH.jpg"),
                             id="ironhack-image",
                             style={
                                 "height": "150px",
@@ -119,14 +114,16 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.P(
-                            "Filter by construction date (or select range in histogram):",
+                            "Delimit by price:",
                             className="control_label",
                         ),
                         dcc.RangeSlider(
-                            id="year_slider",
-                            min=1960,
-                            max=2017,
-                            value=[1990, 2010],
+                            id="price_slider",
+                            min=df['price'].min(),
+                            max=df['price'].max(),
+                            value=[df['price'].min(), df['price'].max()],
+                            tooltip={'always_visible': True,
+                                     'placement': 'bottomLeft'},
                             className="dcc_control",
                         ),
                         html.P("Filter by feature:", className="control_label"),
@@ -226,27 +223,44 @@ app.layout = html.Div(
 
 @app.callback(
     Output(component_id='count_graph', component_property='figure'),
-    [Input(component_id='type_filter', component_property='value')])
-def update_graph(type_filter):
+    [Input(component_id='type_filter', component_property='value'),
+     Input(component_id='price_slider', component_property='value')])
+def update_graph(type_filter, price_slider):
 
     dff = df.copy()
-
+    dff = dff.loc[dff['price'].isin(range(price_slider[0], price_slider[1]))]
     fig = go.Figure()
     for elem in type_filter:
-        random_number = random.randint(0, 16777215)
-        hex_number = format(random_number, 'x')
+
+        hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
         hex_number = '#' + hex_number
 
         fig.add_trace(go.Histogram(x=dff[f'{elem}'],
                                    marker_color=hex_number,
                                    name=f'{elem}',
                                    opacity=0.75,
+                                   nbinsx=20
         ))
-    fig.update_layout(plot_bgcolor='#F9F9F9',
-                      paper_bgcolor='#F9F9F9',
-                     )
+        fig.update_layout(title_text='Overview',
+                          plot_bgcolor='#F9F9F9',
+                          paper_bgcolor='#F9F9F9',
+                          bargap=0.2,
+                          bargroupgap=0.1,
+                          yaxis=dict(title_text='Count of diamonds',
+                                     titlefont=dict(size=20),
+                                     range=[0, 5000],
+                                     dtick=500
+                                     ),
+                          xaxis=dict(title_text=f'{elem}',
+                                     titlefont=dict(size=20),
+
+                                     )
+
+                         )
+    fig.update_yaxes(automargin=True)
 
     return fig
+
 
 # Main
 if __name__ == "__main__":
