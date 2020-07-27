@@ -15,13 +15,6 @@ import plotly.graph_objects as go
 import random
 
 
-def argument_parser():
-    parser = argparse.ArgumentParser(description = 'Set chart type')
-    parser.add_argument("-d", "--data", help="Introduce a file path to visualize its data", required=False)
-    args = parser.parse_args()
-    return args
-
-
 app = dash.Dash(
     __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}]
 )
@@ -29,7 +22,7 @@ server = app.server
 
 
 # Load data
-df = pd.read_csv('/home/david/Documents/data/diamonds_train.csv')
+df = pd.read_csv('/home/david/Documents/learning_repositories/ih_datamadpt0420_project_m2/data/diamonds_train.csv')
 
 # Multi-dropdown options
 filter_options = df.select_dtypes(include=np.number).columns.to_list()
