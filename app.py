@@ -1,6 +1,5 @@
 # Import required libraries
 import pickle
-import argparse
 import copy
 import pathlib
 import dash
@@ -8,7 +7,7 @@ import math
 import datetime as dt
 import pandas as pd
 import numpy as np
-from dash.dependencies import Input, Output, State, ClientsideFunction
+from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
