@@ -106,6 +106,10 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.P(
+                            "Control Pane",
+                            className="control_label",
+                        ),
+                        html.P(
                             "Delimit by price:",
                             className="control_label",
                         ),
@@ -118,18 +122,24 @@ app.layout = html.Div(
                                      'placement': 'bottomLeft'},
                             className="dcc_control",
                         ),
-                        html.P("Filter by feature:", className="control_label"),
+                        html.P("Color filter:", className="control_label"),
                         dcc.RadioItems(
-                            id="well_status_selector",
+                            id="color_selector",
                             options=[
-                                {"label": "All ", "value": "all"},
-                                {"label": "Active only ", "value": "active"},
-                                {"label": "Customize ", "value": "custom"},
+                                {"label": "All", "value": "all"},
+                                {"label": "J", "value": "J"},
+                                {"label": "H", "value": "H"},
+                                {"label": "G", "value": "G"},
+                                {"label": "D", "value": "D"},
+                                {"label": "F", "value": "F"},
+                                {"label": "E", "value": "E"},
+                                {"label": "I", "value": "I"},
                             ],
-                            value="active",
+                            value="all",
                             labelStyle={"display": "inline-block"},
                             className="dcc_control",
                         ),
+                        html.P("Choose columns:", className="control_label"),
                         dcc.Dropdown(
                             id="type_filter",
                             options=[{'label': elem, 'value': elem} for elem in filter_options],
@@ -137,12 +147,7 @@ app.layout = html.Div(
                             value=['price'],
                             className="dcc_control",
                         ),
-                        dcc.Checklist(
-                            id="lock_selector",
-                            options=[{"label": "Lock camera", "value": "locked"}],
-                            className="dcc_control",
-                            value=[],
-                        ),
+
                         html.P("Filter by well type:", className="control_label"),
                         dcc.RadioItems(
                             id="well_type_selector",
@@ -168,10 +173,36 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     [
-                      
                         html.Div(
-                            [dcc.Graph(id="count_graph", figure={})],
-                            id="countGraphContainer",
+                            [
+                                html.Div(
+                                    [html.H6(id="main_title"), html.P("Overview")],
+                                    id="Overview",
+                                    className="mini_container",
+                                ),
+                                html.Div(
+                                    [dcc.RadioItems(
+                                        id="table_type",
+                                        options=[
+                                            {"label": "Data Frame (head)", "value": "dataframe"},
+                                            {"label": "Data Frame (full)", "value": "dataframefull"},
+                                            {"label": "Describe", "value": "describe"},
+                                            {"label": "Uniques", "value": "uniques"}
+                                        ],
+                                        value="dataframe",
+                                        labelStyle={"display": "inline-block"},
+                                        className="dcc_control",
+                                    )],
+                                    className="mini_container",
+                                    id="tables_type"
+                                ),
+                            ],
+                            id="info-container",
+                            className="row container-display",
+                        ),
+                        html.Div(
+                            [dcc.Graph(id="main_graph")],
+                            id="mainGraphContainer",
                             className="pretty_container",
                         ),
                     ],
@@ -184,7 +215,7 @@ app.layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="main_graph")],
+                    [dcc.Graph(id="first_left_graph", figure={})],
                     className="pretty_container seven columns",
                 ),
                 html.Div(
@@ -212,18 +243,54 @@ app.layout = html.Div(
     style={"display": "flex", "flex-direction": "column"},
 )
 
+# Callback for main overview
 
 @app.callback(
-    Output(component_id='count_graph', component_property='figure'),
+    Output(component_id='main_graph', component_property='figure'),
+    [Input(component_id='table_type', component_property='value'),
+     # Input(component_id='price_slider', component_property='value'),
+     ])
+def update_main_graph(table_type):
+    dff = df.copy()
+    fig = go.Figure()
+    
+    if table_type == "dataframe":
+        dff = dff.head(10)
+        fig.add_trace(go.Table(
+            header=dict(values=list(dff.columns)),
+            cells=dict(values=[dff[elem] for elem in dff.columns])
+        )
+        )
+    elif table_type == "describe":
+        dff = dff.describe(include='all')
+        dff.insert(loc=0, column='Stats', value=list(dff.index))
+        fig.add_trace(go.Table(
+            header=dict(values=list(dff.columns)),
+            cells=dict(values=[dff[elem] for elem in dff.columns])
+        )
+        )
+    fig.update_layout(title_text='Overview',
+                      plot_bgcolor='#F9F9F9',
+                      paper_bgcolor='#F9F9F9',)
+    return fig
+
+
+@app.callback(
+    Output(component_id='first_left_graph', component_property='figure'),
     [Input(component_id='type_filter', component_property='value'),
-     Input(component_id='price_slider', component_property='value')])
-def update_graph(type_filter, price_slider):
+     Input(component_id='price_slider', component_property='value'),
+     Input(component_id='color_selector', component_property='value')])
+def update_graph(type_filter, price_slider, color_selector):
 
     dff = df.copy()
-    dff = dff.loc[dff['price'].isin(range(price_slider[0], price_slider[1]))]
+
+    if color_selector == 'all':
+        dff = dff.loc[dff['price'].isin(range(price_slider[0], price_slider[1]))]
+    else:
+        dff = dff.loc[(dff['price'].isin(range(price_slider[0], price_slider[1]))) & (df['color'] == color_selector)]
+
     fig = go.Figure()
     for elem in type_filter:
-
         hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
         hex_number = '#' + hex_number
 
