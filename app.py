@@ -24,8 +24,9 @@ server = app.server
 df = pd.read_csv('/home/david/Documents/learning_repositories/ih_datamadpt0420_project_m2/data/diamonds_train.csv')
 
 # Multi-dropdown options
-filter_options = df.select_dtypes(include=np.number).columns.to_list()
-
+numeric_filter_options = df.select_dtypes(include=np.number).columns.to_list()
+categorical_filter_options = df.select_dtypes(include=np.object).columns.to_list()
+all_filter_options = df.columns.to_list()
 
 # Create global chart template
 mapbox_access_token = "pk.eyJ1IjoicGxvdGx5bWFwYm94IiwiYSI6ImNrOWJqb2F4djBnMjEzbG50amg0dnJieG4ifQ.Zme1-Uzoi75IaFbieBDl3A"
@@ -109,6 +110,15 @@ app.layout = html.Div(
                             "Control Pane",
                             className="control_label",
                         ),
+
+                        html.P("Choose variable:", className="control_label"),
+                        dcc.Dropdown(
+                            id="all_variable_filter",
+                            options=[{'label': elem, 'value': elem} for elem in all_filter_options],
+
+                            value='clarity',
+                            className="dcc_control",
+                        ),
                         html.P(
                             "Delimit by price:",
                             className="control_label",
@@ -134,20 +144,37 @@ app.layout = html.Div(
                                 {"label": "F", "value": "F"},
                                 {"label": "E", "value": "E"},
                                 {"label": "I", "value": "I"},
-                            ],
+                                    ],
                             value="all",
                             labelStyle={"display": "inline-block"},
                             className="dcc_control",
                         ),
-                        html.P("Choose columns:", className="control_label"),
+                        html.Div([
+
+                            html.H6(id="sub_Graphs_title"), html.P("Sub Graphs")],
+                            id="graph_info_container",
+                            className="row_container_display"
+                                ),
+                        html.Div([
+                            html.Div(
+                                [html.H6(id="subgraph_1"), html.P("Sub Graph 1")],
+                                id="sub_graph_1",
+                                className="mini_container"
+                                ),
+                            html.Div(
+                                [html.H6(id="subgraph_2"), html.P("Sub Graph 2")],
+                                id="sub_graph_2",
+                                className="mini_container"
+                            ),
+                        ]),
+                        html.P("TO MOVE:", className="control_label"),
                         dcc.Dropdown(
-                            id="type_filter",
-                            options=[{'label': elem, 'value': elem} for elem in filter_options],
+                            id="categorical_variable_filter",
+                            options=[{'label': elem, 'value': elem} for elem in categorical_filter_options],
                             multi=True,
-                            value=['price'],
+                            value=[],
                             className="dcc_control",
                         ),
-
                         html.P("Filter by well type:", className="control_label"),
                         dcc.RadioItems(
                             id="well_type_selector",
@@ -245,39 +272,56 @@ app.layout = html.Div(
 
 # Callback for main overview
 
+
 @app.callback(
     Output(component_id='main_graph', component_property='figure'),
     [Input(component_id='table_type', component_property='value'),
-     # Input(component_id='price_slider', component_property='value'),
+     Input(component_id='all_variable_filter', component_property='value')
      ])
-def update_main_graph(table_type):
+def update_main_graph(table_type, all_variable_filter):
     dff = df.copy()
     fig = go.Figure()
-    
+    fig.update_layout(plot_bgcolor='#F9F9F9',
+                      paper_bgcolor='#F9F9F9', )
+
+    hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
+    hex_number = '#' + hex_number
+
     if table_type == "dataframe":
         dff = dff.head(10)
         fig.add_trace(go.Table(
             header=dict(values=list(dff.columns)),
             cells=dict(values=[dff[elem] for elem in dff.columns])
-        )
-        )
+                              )
+                      )
+        fig.update_layout(title_text=f'{table_type}')
+
     elif table_type == "describe":
         dff = dff.describe(include='all')
         dff.insert(loc=0, column='Stats', value=list(dff.index))
         fig.add_trace(go.Table(
             header=dict(values=list(dff.columns)),
             cells=dict(values=[dff[elem] for elem in dff.columns])
-        )
-        )
-    fig.update_layout(title_text='Overview',
-                      plot_bgcolor='#F9F9F9',
-                      paper_bgcolor='#F9F9F9',)
+                              )
+                      )
+        fig.update_layout(title_text=f'{table_type}')
+
+    elif table_type == 'uniques':
+        if len(dff[f'{all_variable_filter}'].unique()) <= 10:
+
+            fig.add_trace(go.Histogram(x=dff[f'{all_variable_filter}'],
+                                       marker_color=hex_number,
+                                       name=f'{all_variable_filter}',
+                                       opacity=0.75,
+                                       nbinsx=20)
+                          )
+            fig.update_layout(title_text=f'Sample distribution in terms of {all_variable_filter}')
     return fig
 
 
 @app.callback(
     Output(component_id='first_left_graph', component_property='figure'),
-    [Input(component_id='type_filter', component_property='value'),
+    [Input(component_id='all_variable_filter', component_property='value'),
      Input(component_id='price_slider', component_property='value'),
      Input(component_id='color_selector', component_property='value')])
 def update_graph(type_filter, price_slider, color_selector):
@@ -298,8 +342,8 @@ def update_graph(type_filter, price_slider, color_selector):
                                    marker_color=hex_number,
                                    name=f'{elem}',
                                    opacity=0.75,
-                                   nbinsx=20
-        ))
+                                   nbinsx=20)
+                      )
         fig.update_layout(title_text='Overview',
                           plot_bgcolor='#F9F9F9',
                           paper_bgcolor='#F9F9F9',
@@ -315,7 +359,7 @@ def update_graph(type_filter, price_slider, color_selector):
 
                                      )
 
-                         )
+                          )
     fig.update_yaxes(automargin=True)
 
     return fig
