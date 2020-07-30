@@ -149,50 +149,10 @@ app.layout = html.Div(
                             labelStyle={"display": "inline-block"},
                             className="dcc_control",
                         ),
-                        html.Div([
-
-                            html.H6(id="sub_Graphs_title"), html.P("Sub Graphs")],
+                        html.Div(
+                            [html.H6(id="sub_Graphs_title"), html.P("Sub Graphs")],
                             id="graph_info_container",
                             className="row_container_display"
-                                ),
-                        html.Div([
-                            html.Div(
-                                [html.H6(id="subgraph_1"), html.P("Sub Graph 1")],
-                                id="sub_graph_1",
-                                className="mini_container"
-                                ),
-                            html.Div(
-                                [html.H6(id="subgraph_2"), html.P("Sub Graph 2")],
-                                id="sub_graph_2",
-                                className="mini_container"
-                            ),
-                        ]),
-                        html.P("TO MOVE:", className="control_label"),
-                        dcc.Dropdown(
-                            id="categorical_variable_filter",
-                            options=[{'label': elem, 'value': elem} for elem in categorical_filter_options],
-                            multi=True,
-                            value=[],
-                            className="dcc_control",
-                        ),
-                        html.P("Filter by well type:", className="control_label"),
-                        dcc.RadioItems(
-                            id="well_type_selector",
-                            options=[
-                                {"label": "All ", "value": "all"},
-                                {"label": "Productive only ", "value": "productive"},
-                                {"label": "Customize ", "value": "custom"},
-                            ],
-                            value="productive",
-                            labelStyle={"display": "inline-block"},
-                            className="dcc_control",
-                        ),
-                        dcc.Dropdown(
-                            id="well_types",
-                            #options=well_type_options,
-                            multi=True,
-                            #value=list(WELL_TYPES.keys()),
-                            className="dcc_control",
                         ),
                     ],
                     className="pretty_container four columns",
@@ -241,26 +201,68 @@ app.layout = html.Div(
         ),
         html.Div(
             [
-                html.Div(
-                    [dcc.Graph(id="first_left_graph", figure={})],
-                    className="pretty_container seven columns",
+                html.Div([
+                    html.P("Sub graph 1:", className="control_label"),
+                    dcc.Dropdown(
+                                id="sub_graph1_dropdown",
+                                options=[{'label': elem, 'value': elem} for elem in all_filter_options],
+                                multi=True,
+                                value=['price'],
+                                className="dcc_control"),
+                    dcc.RadioItems(
+                                id="sub_graph1_radio",
+                                options=[
+                                    {"label": "Histogram ", "value": "histogram"},
+                                    {"label": "Scatter", "value": "scatter"},
+                                    {"label": "Regression", "value": "regression"},
+                                    {"label": "Linear", "value": "linear", },
+                                    {"label": "Pie", "value": "pie"}
+                                ],
+                                value='histogram',
+                                labelStyle={"display": "inline-block"},
+                                className="dcc_control",
+                            )
+                ],
+                    className="pretty_container three columns",
                 ),
-                html.Div(
-                    [dcc.Graph(id="individual_graph")],
-                    className="pretty_container five columns",
+                html.Div([
+                    dcc.Graph(id="sub_graph_1", figure={})
+                ],
+                    className="pretty_container nine columns",
                 ),
             ],
             className="row flex-display",
         ),
         html.Div(
             [
-                html.Div(
-                    [dcc.Graph(id="pie_graph")],
-                    className="pretty_container seven columns",
+                html.Div([
+                    html.P("Sub graph 2:", className="control_label"),
+                    dcc.Dropdown(
+                        id="sub_graph2_dropdown",
+                            options=[{'label': elem, 'value': elem} for elem in all_filter_options],
+                            multi=True,
+                            value=[],
+                            className="dcc_control"),
+                    dcc.RadioItems(
+                        id="sub_graph2_radio",
+                        options=[
+                            {"label": "Histogram ", "value": "histogram"},
+                            {"label": "Scatter", "value": "scatter"},
+                            {"label": "Regression", "value": "regression"},
+                            {"label": "Linear", "value": "linear",},
+                            {"label": "Pie", "value": "pie"}
+                        ],
+                        value='histogram',
+                        labelStyle={"display": "inline-block"},
+                        className="dcc_control",
+                    )
+                ],
+                    className="pretty_container three columns",
                 ),
                 html.Div(
-                    [dcc.Graph(id="aggregate_graph")],
-                    className="pretty_container five columns",
+                    [dcc.Graph(id="sub_graph_2", figure={})
+                ],
+                    className="pretty_container nine columns",
                 ),
             ],
             className="row flex-display",
@@ -270,7 +272,7 @@ app.layout = html.Div(
     style={"display": "flex", "flex-direction": "column"},
 )
 
-# Callback for main overview
+# Callback for main graph
 
 
 @app.callback(
@@ -319,12 +321,17 @@ def update_main_graph(table_type, all_variable_filter):
     return fig
 
 
-@app.callback(
-    Output(component_id='first_left_graph', component_property='figure'),
-    [Input(component_id='all_variable_filter', component_property='value'),
+# Callback for sub graph 1
+@app.callback([
+    Output(component_id='sub_graph_1', component_property='figure'),
+    Output(component_id='sub_graph_2', component_property='figure')],
+    [Input(component_id='sub_graph1_dropdown', component_property='value'),
+     Input(component_id='sub_graph1_radio', component_property='value'),
+     Input(component_id='sub_graph2_dropdown', component_property='value'),
+     Input(component_id='sub_graph2_radio', component_property='value'),
      Input(component_id='price_slider', component_property='value'),
      Input(component_id='color_selector', component_property='value')])
-def update_graph(type_filter, price_slider, color_selector):
+def update_graph(sub_graph1_dropdown, sub_graph1_radio, sub_graph2_dropdown, sub_graph2_radio, price_slider, color_selector):
 
     dff = df.copy()
 
@@ -333,38 +340,50 @@ def update_graph(type_filter, price_slider, color_selector):
     else:
         dff = dff.loc[(dff['price'].isin(range(price_slider[0], price_slider[1]))) & (df['color'] == color_selector)]
 
-    fig = go.Figure()
-    for elem in type_filter:
+    fig1 = None
+    fig2 = None
+    if sub_graph1_radio == 'histogram':
+        fig1 = histogram(sub_graph1_dropdown, dff)
+
+    if sub_graph2_radio == 'histogram':
+        fig2 = histogram(sub_graph2_dropdown, dff)
+
+    return fig1, fig2
+
+
+def histogram(columns, dataf):
+
+    figure = go.Figure()
+
+    if not hex_number:
         hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
         hex_number = '#' + hex_number
+    for elem in columns:
 
-        fig.add_trace(go.Histogram(x=dff[f'{elem}'],
+        figure.add_trace(go.Histogram(x=dataf[f'{elem}'],
                                    marker_color=hex_number,
                                    name=f'{elem}',
                                    opacity=0.75,
                                    nbinsx=20)
-                      )
-        fig.update_layout(title_text='Overview',
-                          plot_bgcolor='#F9F9F9',
-                          paper_bgcolor='#F9F9F9',
-                          bargap=0.2,
-                          bargroupgap=0.1,
-                          yaxis=dict(title_text='Count of diamonds',
+                         )
+        figure.update_layout(title_text='Overview',
+                             plot_bgcolor='#F9F9F9',
+                             paper_bgcolor='#F9F9F9',
+                             bargap=0.2,
+                             bargroupgap=0.1,
+                             yaxis=dict(title_text='Count of diamonds',
                                      titlefont=dict(size=20),
                                      range=[0, 5000],
                                      dtick=500
                                      ),
-                          xaxis=dict(title_text=f'{elem}',
+                             xaxis=dict(title_text=f'{elem}',
                                      titlefont=dict(size=20),
 
                                      )
 
-                          )
-    fig.update_yaxes(automargin=True)
-
-    return fig
-
-
+                             )
+    figure.update_yaxes(automargin=True)
+    return figure
 # Main
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=True, use_reloader=True)
