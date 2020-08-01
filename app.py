@@ -207,7 +207,7 @@ app.layout = html.Div(
                                 id="sub_graph1_dropdown",
                                 options=[{'label': elem, 'value': elem} for elem in all_filter_options],
                                 multi=True,
-                                value=['price'],
+                                value=['depth', 'table'],
                                 className="dcc_control"),
                     dcc.RadioItems(
                                 id="sub_graph1_radio",
@@ -326,7 +326,7 @@ def update_main_graph(table_type, all_variable_filter):
                                          range=[0, 15000],
                                          dtick=1500
                                          ),
-                              xaxis=dict(title_text=f'{" ".join(categorical_filter_options)}',
+                              xaxis=dict(title_text=f'{" ".join(all_variable_filter)}',
                                          titlefont=dict(size=20),
                                          )
                               )
