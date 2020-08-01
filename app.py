@@ -115,8 +115,8 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id="all_variable_filter",
                             options=[{'label': elem, 'value': elem} for elem in all_filter_options],
-
-                            value='clarity',
+                            multi=True,
+                            value=['clarity', 'cut'],
                             className="dcc_control",
                         ),
                         html.P(
@@ -150,7 +150,7 @@ app.layout = html.Div(
                             className="dcc_control",
                         ),
                         html.Div(
-                            [html.H6(id="sub_Graphs_title"), html.P("Sub Graphs")],
+                            #[html.H6(id="sub_Graphs_title"), html.P("Sub Graphs")],
                             id="graph_info_container",
                             className="row_container_display"
                         ),
@@ -307,7 +307,7 @@ def update_main_graph(table_type, all_variable_filter):
         fig.update_layout(title_text=f'{table_type}')
 
     elif table_type == 'uniques':
-        for elem in categorical_filter_options:
+        for elem in all_variable_filter:
             hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
             hex_number = '#' + hex_number
 
