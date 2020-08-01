@@ -12,7 +12,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objects as go
 import random
-
+import webbrowser
 
 app = dash.Dash(
     __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}]
@@ -453,4 +453,6 @@ def scatter(columns, dataf):
 
 # Main
 if __name__ == "__main__":
+    webbrowser.open_new_tab('http://127.0.0.1:8050/')
     app.run_server(debug=True, use_reloader=False)
+
