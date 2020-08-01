@@ -213,10 +213,10 @@ app.layout = html.Div(
                                 id="sub_graph1_radio",
                                 options=[
                                     {"label": "Histogram ", "value": "histogram"},
-                                    {"label": "Scatter", "value": "scatter"},
-                                    {"label": "Regression", "value": "regression"},
+                                    #{"label": "Scatter", "value": "scatter"},
+                                    #{"label": "Regression", "value": "regression"},
                                     {"label": "Linear", "value": "linear", },
-                                    {"label": "Pie", "value": "pie"}
+                                    #{"label": "Pie", "value": "pie"}
                                 ],
                                 value='histogram',
                                 labelStyle={"display": "inline-block"},
@@ -239,20 +239,20 @@ app.layout = html.Div(
                     html.P("Sub graph 2:", className="control_label"),
                     dcc.Dropdown(
                         id="sub_graph2_dropdown",
-                            options=[{'label': elem, 'value': elem} for elem in all_filter_options],
-                            multi=True,
-                            value=[],
-                            className="dcc_control"),
+                        options=[{'label': elem, 'value': elem} for elem in all_filter_options],
+                        multi=True,
+                        value=['depth', 'table', 'carat'],
+                        className="dcc_control"),
                     dcc.RadioItems(
                         id="sub_graph2_radio",
                         options=[
                             {"label": "Histogram ", "value": "histogram"},
-                            {"label": "Scatter", "value": "scatter"},
-                            {"label": "Regression", "value": "regression"},
-                            {"label": "Linear", "value": "linear",},
-                            {"label": "Pie", "value": "pie"}
+                            #{"label": "Scatter", "value": "scatter"},
+                            #{"label": "Regression", "value": "regression"},
+                            {"label": "Linear", "value": "linear"},
+                            #{"label": "Pie", "value": "pie"}
                         ],
-                        value='histogram',
+                        value='linear',
                         labelStyle={"display": "inline-block"},
                         className="dcc_control",
                     )
@@ -273,8 +273,6 @@ app.layout = html.Div(
 )
 
 # Callback for main graph
-
-
 @app.callback(
     Output(component_id='main_graph', component_property='figure'),
     [Input(component_id='table_type', component_property='value'),
@@ -309,29 +307,43 @@ def update_main_graph(table_type, all_variable_filter):
         fig.update_layout(title_text=f'{table_type}')
 
     elif table_type == 'uniques':
-        if len(dff[f'{all_variable_filter}'].unique()) <= 10:
+        for elem in categorical_filter_options:
+            hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
+            hex_number = '#' + hex_number
 
-            fig.add_trace(go.Histogram(x=dff[f'{all_variable_filter}'],
+            fig.add_trace(go.Histogram(x=dff[f'{elem}'],
                                        marker_color=hex_number,
-                                       name=f'{all_variable_filter}',
+                                       name=f'{elem}',
                                        opacity=0.75,
-                                       nbinsx=20)
-                          )
-            fig.update_layout(title_text=f'Sample distribution in terms of {all_variable_filter}')
+                                       nbinsx=20))
+            fig.update_layout(title_text='Histogram',
+                              plot_bgcolor='#F9F9F9',
+                              paper_bgcolor='#F9F9F9',
+                              bargap=0.2,
+                              bargroupgap=0.1,
+                              yaxis=dict(title_text='Count of diamonds',
+                                         titlefont=dict(size=20),
+                                         range=[0, 15000],
+                                         dtick=1500
+                                         ),
+                              xaxis=dict(title_text=f'{" ".join(categorical_filter_options)}',
+                                         titlefont=dict(size=20),
+                                         )
+                              )
+            fig.update_layout(title_text=f'Sample distribution in terms of categorical variables')
+            fig.update_xaxes(tickangle=45)
+
     return fig
 
 
 # Callback for sub graph 1
-@app.callback([
+@app.callback(
     Output(component_id='sub_graph_1', component_property='figure'),
-    Output(component_id='sub_graph_2', component_property='figure')],
     [Input(component_id='sub_graph1_dropdown', component_property='value'),
      Input(component_id='sub_graph1_radio', component_property='value'),
-     Input(component_id='sub_graph2_dropdown', component_property='value'),
-     Input(component_id='sub_graph2_radio', component_property='value'),
      Input(component_id='price_slider', component_property='value'),
      Input(component_id='color_selector', component_property='value')])
-def update_graph(sub_graph1_dropdown, sub_graph1_radio, sub_graph2_dropdown, sub_graph2_radio, price_slider, color_selector):
+def update_sub_graph_1(sub_graph1_dropdown, sub_graph1_radio, price_slider, color_selector):
 
     dff = df.copy()
 
@@ -341,49 +353,104 @@ def update_graph(sub_graph1_dropdown, sub_graph1_radio, sub_graph2_dropdown, sub
         dff = dff.loc[(dff['price'].isin(range(price_slider[0], price_slider[1]))) & (df['color'] == color_selector)]
 
     fig1 = None
-    fig2 = None
+
     if sub_graph1_radio == 'histogram':
         fig1 = histogram(sub_graph1_dropdown, dff)
+    elif sub_graph1_radio == 'linear':
+        fig1 = scatter(sub_graph1_dropdown, dff)
 
+    return fig1
+
+
+# Callback for sub graph 2
+@app.callback(
+    Output(component_id='sub_graph_2', component_property='figure'),
+    [Input(component_id='sub_graph2_dropdown', component_property='value'),
+     Input(component_id='sub_graph2_radio', component_property='value'),
+     Input(component_id='price_slider', component_property='value'),
+     Input(component_id='color_selector', component_property='value')])
+def update_sub_graph_2(sub_graph2_dropdown, sub_graph2_radio, price_slider, color_selector):
+
+    dff = df.copy()
+    if color_selector == 'all':
+        dff = dff.loc[dff['price'].isin(range(price_slider[0], price_slider[1]))]
+    else:
+        dff = dff.loc[(dff['price'].isin(range(price_slider[0], price_slider[1]))) & (df['color'] == color_selector)]
+
+    fig2 = None
     if sub_graph2_radio == 'histogram':
         fig2 = histogram(sub_graph2_dropdown, dff)
-
-    return fig1, fig2
+    elif sub_graph2_radio == 'linear':
+        fig2 = scatter(sub_graph2_dropdown, dff)
+    return fig2
 
 
 def histogram(columns, dataf):
 
     figure = go.Figure()
 
-    if not hex_number:
+    for elem in columns:
         hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
         hex_number = '#' + hex_number
-    for elem in columns:
-
         figure.add_trace(go.Histogram(x=dataf[f'{elem}'],
                                    marker_color=hex_number,
                                    name=f'{elem}',
                                    opacity=0.75,
                                    nbinsx=20)
                          )
-        figure.update_layout(title_text='Overview',
+        figure.update_layout(title_text='Histogram',
                              plot_bgcolor='#F9F9F9',
                              paper_bgcolor='#F9F9F9',
                              bargap=0.2,
                              bargroupgap=0.1,
                              yaxis=dict(title_text='Count of diamonds',
-                                     titlefont=dict(size=20),
-                                     range=[0, 5000],
-                                     dtick=500
-                                     ),
-                             xaxis=dict(title_text=f'{elem}',
-                                     titlefont=dict(size=20),
-
-                                     )
-
+                                        titlefont=dict(size=20),
+                                        range=[0, 15000],
+                                        dtick=1500
+                                        ),
+                             xaxis=dict(title_text=f'{" ".join(columns)}',
+                                        titlefont=dict(size=20),
+                                        )
                              )
     figure.update_yaxes(automargin=True)
     return figure
+
+
+def scatter(columns, dataf):
+
+    figure = go.Figure()
+
+    hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
+    hex_number = '#' + hex_number
+
+    for elem in columns:
+
+        df = dataf.groupby(f'{elem}').mean().reset_index()
+
+        figure.add_trace(go.Scattergl(x=df[f'{elem}'],
+                                      y=df['price'],
+                                      name=f'{elem}'
+
+                                      )
+                         )
+        figure.update_layout(title_text='Scatter plot',
+                             plot_bgcolor='#F9F9F9',
+                             paper_bgcolor='#F9F9F9',
+                             bargap=0.2,
+                             bargroupgap=0.1,
+                             yaxis=dict(title_text='Price',
+                                        titlefont=dict(size=20),
+                                        range=[0, 15000],
+                                        dtick=2000
+                                        ),
+                             xaxis=dict(title_text=f'{" - ".join(columns)}',
+                                        titlefont=dict(size=20),
+                                        )
+                             )
+
+    return figure
+
+
 # Main
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)
