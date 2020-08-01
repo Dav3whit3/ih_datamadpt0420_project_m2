@@ -22,7 +22,7 @@ server = app.server
 
 # Load data
 df = pd.read_csv('/home/david/Documents/learning_repositories/ih_datamadpt0420_project_m2/data/diamonds_train.csv')
-
+df['volume'] = df['x'] * df['y'] * df['z']
 # Multi-dropdown options
 numeric_filter_options = df.select_dtypes(include=np.number).columns.to_list()
 categorical_filter_options = df.select_dtypes(include=np.object).columns.to_list()
@@ -393,10 +393,10 @@ def histogram(columns, dataf):
         hex_number = ''.join([random.choice('0123456789ABCDEF') for x in range(6)])
         hex_number = '#' + hex_number
         figure.add_trace(go.Histogram(x=dataf[f'{elem}'],
-                                   marker_color=hex_number,
-                                   name=f'{elem}',
-                                   opacity=0.75,
-                                   nbinsx=20)
+                                      marker_color=hex_number,
+                                      name=f'{elem}',
+                                      opacity=0.75,
+                                      nbinsx=20)
                          )
         figure.update_layout(title_text='Histogram',
                              plot_bgcolor='#F9F9F9',
@@ -430,7 +430,6 @@ def scatter(columns, dataf):
         figure.add_trace(go.Scattergl(x=df[f'{elem}'],
                                       y=df['price'],
                                       name=f'{elem}'
-
                                       )
                          )
         figure.update_layout(title_text='Scatter plot',
