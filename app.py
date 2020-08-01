@@ -172,7 +172,6 @@ app.layout = html.Div(
                                         id="table_type",
                                         options=[
                                             {"label": "Data Frame (head)", "value": "dataframe"},
-                                            {"label": "Data Frame (full)", "value": "dataframefull"},
                                             {"label": "Describe", "value": "describe"},
                                             {"label": "Uniques", "value": "uniques"}
                                         ],
@@ -241,7 +240,7 @@ app.layout = html.Div(
                         id="sub_graph2_dropdown",
                         options=[{'label': elem, 'value': elem} for elem in all_filter_options],
                         multi=True,
-                        value=['depth', 'table', 'carat'],
+                        value=['carat', 'x'],
                         className="dcc_control"),
                     dcc.RadioItems(
                         id="sub_graph2_radio",
@@ -440,10 +439,12 @@ def scatter(columns, dataf):
                              yaxis=dict(title_text='Price',
                                         titlefont=dict(size=20),
                                         range=[0, 15000],
-                                        dtick=2000
+                                        dtick=2000,
+                                        autorange=True
                                         ),
                              xaxis=dict(title_text=f'{" - ".join(columns)}',
                                         titlefont=dict(size=20),
+
                                         )
                              )
 
