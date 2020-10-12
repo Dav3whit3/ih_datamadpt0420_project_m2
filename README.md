@@ -1,24 +1,19 @@
-# IH Data Analytics 0420 Project M1
+# IH Data Analytics 0420 Project M2
 
-In this project we are challenged to build a data pipeline using multiple techonologies to extract information of a basic-income poll made in Europe. My end product is presented as a dashboard built in Python Dash as looks below.
+In this project we are challenged to build a dashboard using Tableau to visualize information of the features of diamonds.
 
 ![Image](images/app.png)
 ---
 
-### :baby: **Status**
-v 0.2. API data extraction refactored into local csv.
-
 ### :running: **One-liner**
-This data pipeline builds a dashboard showing a table of information with filter components and automates the export of a csv of the selected data. The information is extracted from Swagger API dataatwork and a provided database.
+This dashboard shows an in-depth analysis of a provided dataset of diamonds in order to stablish a good decision making process for buying one.
 
 ### :computer: **Technology stack**
-Python, argparse, Pandas, SQLalchemy, Dash, Requests, BeatufulSoup, Plotly.
+Tableau, Python, Pandas, Plotly.
 
-### :wrench: **Configuration**
-Just provide a -r route to where you want the selected data file be stored.
 
 ### :see_no_evil: **Usage**
-Use the provided filter components to visualize descriptive information of the poll dataset.
+Just visit my dashboard! https://public.tableau.com/profile/david7192#!/vizhome/ih_datamadpt0420_project_m2_16024385942730/Story1
 
 ### :love_letter: **Contact info**
 davidblancoferrandez@gmail.com
